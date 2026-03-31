@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         }).addTo(map).bindPopup(`<strong>${log.title || log.location}</strong><br>${log.province_zh || ""}`);
                     });
 
-                    fetch('/china-province.geojson')
+                    fetch('./china-province.geojson')
                         .then(res => res.json())
                         .then(geojson => {
                             L.geoJSON(geojson, {
@@ -239,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 function renderWorldMode(map, visitedCountryNames) {
-    fetch('/world-110m.geojson')
+    fetch('./world-110m.geojson')
     .then(res => res.json())
     .then(geojson => {
         L.geoJSON(geojson, {
