@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="stylesheet" href="./style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>旅行記録アプリ</title>
+  </head>
+  <body>
+
+    <a href="./index.html" class="back-link">← 地図に戻る</a>
+    <h1>旅の記録</h1>
+
+    <form id="travel-form">
+      <input type="hidden" id="editing-id" name="editing-id" value="">
+      <input type="date" name="date" id="date-input" required />
+      <input type="text" name="title" id="title-input" placeholder="タイトル" required />
+      
+      <div class="autocomplete-wrapper">
+        <input type="text" name="location" id="location-input" placeholder="場所（例: 长白山）" autocomplete="off" required />
+        <div id="suggest-list" class="suggest-list"></div>
+      </div>
+      
+      <textarea name="memo" id="memo-input" placeholder="memo" rows="4"></textarea>    
+      <div style="display:flex; gap:1rem;">
+        <button type="submit" id="submit-btn" style="flex:1;">保存</button>
+        <button type="button" id="cancel-edit-btn" class="cancel-edit-btn" style="flex:1;">キャンセル</button>
+      </div>
+    </form>
+
+    <div id="log-list"></div>
+
+    <script type="module" src="./src/register.js"></script>
+
+  </body>
+</html>
