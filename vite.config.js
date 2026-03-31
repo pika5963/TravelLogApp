@@ -11,9 +11,4 @@ export default defineConfig({
       },
     },
   },
-  resolve: {
-    alias: {
-      leaflet: '/node_modules/leaflet/dist/leaflet.js',
-    },
-  },
 });
