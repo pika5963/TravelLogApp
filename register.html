@@ -5,39 +5,114 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <link rel="stylesheet" href="./style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>旅行記録アプリ</title>
+    <title>Tabi Log</title>
 
-    <!-- PWA / iOS ホーム画面用メタタグ -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="旅行マップ">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-title" content="Tabi Log">
+    <meta name="theme-color" content="#1a1b26">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
   </head>
-  <body>
+  <body class="register-layout">
+    <div class="app-container scrollable-app">
+      <!-- ヘッダー -->
+      <header class="app-header shadow-bg">
+          <div class="header-left"></div>
+          <h1 class="logo">旅ログ</h1>
+          <div class="header-right">
+              <button class="icon-btn" aria-label="Settings" id="theme-toggle-btn">
+                  <i class="ph ph-gear"></i>
+              </button>
+          </div>
+      </header>
 
-    <a href="./index.html" class="back-link">← 地図に戻る</a>
-    <h1>旅の記録</h1>
+      <div class="page-content">
+        <!-- New Entry Accordion -->
+        <div class="accordion-card">
+          <div class="accordion-header" id="form-accordion-toggle">
+            <h2>New Entry</h2>
+            <i class="ph ph-caret-down accordion-icon"></i>
+          </div>
+          
+          <div class="accordion-content" id="form-accordion-content">
+            <form id="travel-form">
+              <input type="hidden" id="editing-id" name="editing-id" value="">
+              
+              <div class="form-row flex-row">
+                <div class="form-group flex-1">
+                  <label>DATE</label>
+                  <div class="input-with-icon">
+                    <input type="date" name="date" id="date-input" required />
+                    <i class="ph ph-calendar-blank"></i>
+                  </div>
+                </div>
+                
+                <div class="form-group flex-1">
+                  <label>LOCATION</label>
+                  <div class="autocomplete-wrapper">
+                    <input type="text" name="location" id="location-input" placeholder="City, Country" autocomplete="off" required />
+                    <div id="suggest-list" class="suggest-list"></div>
+                  </div>
+                </div>
+              </div>
 
-    <form id="travel-form">
-      <input type="hidden" id="editing-id" name="editing-id" value="">
-      <input type="date" name="date" id="date-input" required />
-      <input type="text" name="title" id="title-input" placeholder="タイトル" required />
-      
-      <div class="autocomplete-wrapper">
-        <input type="text" name="location" id="location-input" placeholder="場所（例: 长白山）" autocomplete="off" required />
-        <div id="suggest-list" class="suggest-list"></div>
+              <div class="form-group mt-1">
+                <label>TITLE</label>
+                <input type="text" name="title" id="title-input" placeholder="Title of your memory..." required />
+              </div>
+
+              <div class="form-group mt-1">
+                <label>MEMO</label>
+                <textarea name="memo" id="memo-input" placeholder="Describe your memories..." rows="3"></textarea>    
+              </div>
+
+              <div class="form-actions mt-2">
+                <button type="submit" id="submit-btn" class="btn-primary">
+                  <i class="ph-fill ph-floppy-disk"></i> Save Memory
+                </button>
+                <button type="button" id="cancel-edit-btn" class="cancel-edit-btn">
+                  <i class="ph ph-x"></i> Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Log History Section -->
+        <div class="journal-section mt-4">
+          <div class="section-header">
+            <div>
+              <span class="section-subtitle">JOURNAL</span>
+              <h2 class="section-title">Log History</h2>
+            </div>
+            <span class="log-count" id="log-count-display">0 Entries</span>
+          </div>
+
+          <div id="log-list" class="log-list-modern mt-2"></div>
+        </div>
       </div>
-      
-      <textarea name="memo" id="memo-input" placeholder="memo" rows="4"></textarea>    
-      <div style="display:flex; gap:1rem;">
-        <button type="submit" id="submit-btn" style="flex:1;">保存</button>
-        <button type="button" id="cancel-edit-btn" class="cancel-edit-btn" style="flex:1;">キャンセル</button>
-      </div>
-    </form>
 
-    <div id="log-list"></div>
+      <!-- ボトムナビゲーション -->
+      <nav class="bottom-nav">
+          <a href="./index.html" class="nav-item">
+              <div class="nav-icon-wrapper">
+                  <i class="ph-fill ph-map-trifold"></i>
+              </div>
+              <span>MAP</span>
+          </a>
+          <a href="#" class="nav-item active">
+              <div class="nav-icon-wrapper">
+                  <i class="ph-bold ph-plus"></i>
+              </div>
+              <span>ADD LOG</span>
+          </a>
+      </nav>
+    </div>
 
     <script type="module" src="./src/register.js"></script>
-
   </body>
 </html>

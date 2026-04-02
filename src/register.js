@@ -1,5 +1,39 @@
 import '../style.css';
 
+// テーマの設定ロジック
+let currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const themeIcon = document.querySelector('#theme-toggle-btn i');
+    if (themeIcon) {
+        if (theme === 'dark') {
+            themeIcon.className = 'ph ph-sun';
+        } else {
+            themeIcon.className = 'ph ph-moon'; // Actually design has gear icon, but let's sync with theme
+        }
+    }
+}
+applyTheme(currentTheme);
+
+// カレンダー表記用のフォーマット (ex: OCT 24, 2023)
+function formatToDisplayDate(dateStr) {
+  if(!dateStr) return "";
+  const d = new Date(dateStr);
+  if(isNaN(d.getTime())) return dateStr;
+  const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  return `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// 枠線グラデーションのパターン定義
+const gradients = [
+  'linear-gradient(to bottom, #0ea5e9, #6366f1)', // Blue to Indigo
+  'linear-gradient(to bottom, #d946ef, #8b5cf6)', // Fuchsia to Purple
+  'linear-gradient(to bottom, #10b981, #3b82f6)', // Emerald to Blue
+  'linear-gradient(to bottom, #3b82f6, #8b5cf6)', // Blue to Purple
+  'linear-gradient(to bottom, #f59e0b, #ef4444)'  // Amber to Red
+];
+
 // DOM読込後に実行
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("travel-form");
@@ -15,16 +49,42 @@ document.addEventListener("DOMContentLoaded", () => {
   const submitBtn = document.getElementById("submit-btn");
   const cancelEditBtn = document.getElementById("cancel-edit-btn");
 
+  const accordionToggle = document.getElementById("form-accordion-toggle");
+  const accordionContent = document.getElementById("form-accordion-content");
+  const logCountDisplay = document.getElementById("log-count-display");
+  const themeToggleBtn = document.getElementById("theme-toggle-btn");
+
   let selectedLocationData = null;
   let debounceTimer = null;
+
+  // テーマ切替ボタン
+  if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+          currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('theme', currentTheme);
+          applyTheme(currentTheme);
+      });
+  }
+
+  // アコーディオン開閉
+  if (accordionToggle && accordionContent) {
+    accordionToggle.addEventListener("click", () => {
+      accordionToggle.classList.toggle("open");
+      accordionContent.classList.toggle("open");
+    });
+  }
 
   // フォームリセット用関数
   function resetFormUI() {
     form.reset();
     editingIdInput.value = "";
     selectedLocationData = null;
-    submitBtn.textContent = "保存";
+    submitBtn.innerHTML = '<i class="ph-fill ph-floppy-disk"></i> Save Memory';
     cancelEditBtn.style.display = "none";
+    
+    // アコーディオンを閉じる
+    accordionToggle.classList.remove("open");
+    accordionContent.classList.remove("open");
   }
 
   // キャンセルボタン
@@ -39,7 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
   locationInput.addEventListener("input", (e) => {
     const query = e.target.value.trim();
     
-    // 入力が空になったらリストを消す
     if (!query) {
       suggestList.style.display = "none";
       suggestList.innerHTML = "";
@@ -47,10 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // 以前のタイマーをクリア
     clearTimeout(debounceTimer);
 
-    // 800ms後に入力が止まっていればフェッチする
     debounceTimer = setTimeout(async () => {
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1`);
@@ -63,10 +120,9 @@ document.addEventListener("DOMContentLoaded", () => {
             div.className = "suggest-item";
             div.textContent = item.display_name;
             
-            // 候補をクリックしたときの処理
             div.addEventListener("click", () => {
-              locationInput.value = item.display_name; // 入力欄に名前を反映
-              suggestList.style.display = "none";      // リストを隠す
+              locationInput.value = item.display_name;
+              suggestList.style.display = "none";
               
               const address = item.address || {};
               selectedLocationData = {
@@ -89,7 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 800);
   });
 
-  // サジェストリストの外側をクリックしたら閉じる
   document.addEventListener("click", (e) => {
     if (!e.target.closest('.autocomplete-wrapper')) {
       suggestList.style.display = "none";
@@ -114,14 +169,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const item = data[0];
           const address = item.address || {};
           selectedLocationData = {
-            location: locationText, // ユーザー入力を優先
+            location: locationText, 
             lat: parseFloat(item.lat),
             lon: parseFloat(item.lon),
             country: address.country || "不明",
             province_zh: address.state || ""
           };
         } else {
-          // 見つからない場合は最低限のデータで作成
           selectedLocationData = {
             location: locationText,
             lat: null,
@@ -138,9 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const editingId = editingIdInput.value;
 
-    // 記録の作成(フォーム送信データ + サジェストで取得したデータ)
     const newLog = {
-      id: editingId ? parseInt(editingId) : Date.now(), // 更新時は元のIDを保持
+      id: editingId ? parseInt(editingId) : Date.now(),
       date: formData.get("date"),
       title: formData.get("title"),
       location: selectedLocationData.location,
@@ -151,18 +204,14 @@ document.addEventListener("DOMContentLoaded", () => {
       province_zh: selectedLocationData.province_zh
     };
 
-    // localStorageに保存されているデータを配列として取り出す
     let logs = JSON.parse(localStorage.getItem("travelLogs") || "[]");
 
     if (editingId) {
-      // 既存の記録を更新
       logs = logs.map(log => log.id === newLog.id ? newLog : log);
     } else {
-      // 現在の記録配列に、新しい記録を追加
       logs.push(newLog);
     }
 
-    // 再び配列をJSON文字列に変換してlocalStorageに保存
     localStorage.setItem("travelLogs", JSON.stringify(logs));
 
     resetFormUI();
@@ -173,39 +222,58 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadLogs() {
     const logs = JSON.parse(localStorage.getItem("travelLogs") || "[]");
     
-    // 日付の新しい順に並び替え
     logs.sort((a, b) => new Date(b.date) - new Date(a.date));
     
     list.innerHTML = "";
+    if (logCountDisplay) {
+        logCountDisplay.textContent = `${logs.length} Entries`;
+    }
 
-    logs.forEach((log) => {
+    logs.forEach((log, index) => {
       const div = document.createElement("div");
-      div.className = "log-card";
+      div.className = "modern-log-card";
+      
+      // グラデーションをループで適用
+      const gradient = gradients[index % gradients.length];
+      div.style.setProperty('--card-gradient', gradient);
 
-      // 緯度経度の表示があれば追加
-      const coordText = (log.lat && log.lon) ? `<br><small>(${log.lat.toFixed(4)}, ${log.lon.toFixed(4)})</small>` : "";
-
+      // 都市名だけを取り出す簡易ロジック（例：Tokyo, Japan -> Tokyo）
+      const shortLocation = log.location ? log.location.split(',')[0].trim() : "Unknown";
+      
       div.innerHTML = `
-        <h3>${log.title} (<a href="shortcuts://run-shortcut?name=FindTripPhotos&input=${log.date}" style="color: #4a90e2; text-decoration: none;">${log.date}</a>)</h3>
-        <p><strong>場所:</strong> ${log.location} ${coordText}</p>
-        <p>${log.memo}</p>
-        <p><strong>国:</strong> ${log.country} <strong>省:</strong> ${log.province_zh || "なし"}</p>
-        <div>
-          <button class="edit-btn" data-id="${log.id}">編集</button>
-          <button class="delete-btn" data-id="${log.id}">削除</button>
+        <div class="log-card-header">
+            <span class="log-date">${formatToDisplayDate(log.date)}</span>
+            <div class="location-pill">
+                <i class="ph-fill ph-map-pin"></i>
+                <span>${shortLocation}</span>
+            </div>
+        </div>
+        <h3 class="log-title">${log.title}</h3>
+        <p class="log-snippet">${log.memo || "No description provided."}</p>
+        
+        <div class="card-actions" style="margin-top:1rem; display:flex; gap:0.5rem; display:none;">
+            <button class="edit-btn" style="background:#10b981; color:#fff; border:none; padding:0.4rem 1rem; border-radius:99px; font-size:0.8rem; cursor:pointer;" data-id="${log.id}">編集 / Edit</button>
+            <button class="delete-btn" style="background:#ef4444; color:#fff; border:none; padding:0.4rem 1rem; border-radius:99px; font-size:0.8rem; cursor:pointer;" data-id="${log.id}">削除 / Delete</button>
         </div>
       `;
 
-      // 編集ボタンのイベント
-      div.querySelector(".edit-btn").addEventListener("click", () => {
-        // UIにデータをセット
+      // クリックでアクション表示/非表示トグル（シンプル化）
+      div.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'BUTTON') {
+            const actions = div.querySelector('.card-actions');
+            actions.style.display = actions.style.display === 'none' ? 'flex' : 'none';
+        }
+      });
+
+      // 編集ボタン
+      div.querySelector(".edit-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
         editingIdInput.value = log.id;
         dateInput.value = log.date;
         titleInput.value = log.title;
         locationInput.value = log.location;
         memoInput.value = log.memo;
 
-        // 検索や上書きをしないよう内部データを復元
         selectedLocationData = {
           location: log.location,
           lat: log.lat,
@@ -214,17 +282,21 @@ document.addEventListener("DOMContentLoaded", () => {
           province_zh: log.province_zh
         };
 
-        // ボタンの表示切替
-        submitBtn.textContent = "更新";
+        submitBtn.innerHTML = '<i class="ph-fill ph-check-circle"></i> 更新 (Update)';
         cancelEditBtn.style.display = "block";
+        
+        // アコーディオンを開く
+        accordionToggle.classList.add("open");
+        accordionContent.classList.add("open");
 
-        // フォームまでスクロール
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
-      // 削除ボタンのイベント
-      div.querySelector(".delete-btn").addEventListener("click", () => {
-        // キャッシュから削除 (後方互換用)
+      // 削除ボタン
+      div.querySelector(".delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if(!confirm("Are you sure you want to delete this memory?")) return;
+
         const cache = JSON.parse(localStorage.getItem("locationCache") || "{}");
         delete cache[log.location];
         localStorage.setItem("locationCache", JSON.stringify(cache));
@@ -234,7 +306,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         localStorage.setItem("travelLogs", JSON.stringify(newLogs));
         
-        // もし現在編集中のものを削除したならフォームをリセット
         if (editingIdInput.value == idToDelete) {
           resetFormUI();
         } else {

@@ -2,59 +2,102 @@
 <html lang="ja">
     <head>
         <meta charset="UTF-8">
-        <title>地図表示</title>
+        <title>Tabi Log</title>
         
         <!-- PWA / iOS ホーム画面用メタタグ -->
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="apple-mobile-web-app-title" content="旅行マップ">
-        <meta name="theme-color" content="#ffffff">
+        <meta name="apple-mobile-web-app-title" content="Tabi Log">
+        <meta name="theme-color" content="#1a1b26"> <!-- Dark as default -->
 
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
         <link rel="stylesheet" href="./style.css" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <!-- CSS -->
-        <style>
-            #map {
-                width: 100%;
-                height: 600px;
-                margin-top: 1rem;
-            }
-            .mode-buttons {
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-                margin-top: 1rem;
-            }
-            .mode-buttons button{
-                padding: 0.5rem 1rem;
-                font-size: 1rem;
-                cursor: pointer;
-            }
-            .mode-buttons button.active{
-                background-color: #4a90e2;
-                color: white;
-                font-weight: bold;
-                border: 2px solid #2c6cb9;
-            }
-        </style>
+        
+        <!-- Fonts and Icons -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <script src="https://unpkg.com/@phosphor-icons/web"></script>
     </head>
 
     <body>
-        <h1>旅行マップ</h1>
+        <div class="app-container">
+            <!-- ヘッダー -->
+            <header class="app-header">
+                <div class="header-left"></div>
+                <h1 class="logo">旅ログ</h1>
+                <div class="header-right">
+                    <button class="icon-btn" aria-label="Theme Toggle" id="theme-toggle-btn">
+                        <i class="ph ph-moon" id="theme-icon"></i>
+                    </button>
+                </div>
+            </header>
 
-        <!-- 表示モード切替ボタン -->
-        <div class="mode-buttons">
-            <button data-mode="world">世界</button>
-            <button data-mode="china">中国</button>
-            <button data-mode="japan">日本</button>
+            <!-- 地図表示（上部フレックス） -->
+            <div class="map-wrapper">
+                <div id="map" class="map-split-view"></div>
+                
+                <!-- 表示モード切替ボタン (カプセル型) -->
+                <div class="mode-selector map-overlay-toggle">
+                    <button data-mode="world" class="active">WORLD</button>
+                    <button data-mode="china">CHINA</button>
+                </div>
+            </div>
+
+            <!-- UIダッシュボード層 -->
+            <div class="dashboard-section">
+
+                <!-- プログレスカード -->
+                <div class="progress-card">
+                    <div class="progress-info">
+                        <div class="progress-icon">
+                            <i class="ph-fill ph-globe-hemisphere-west"></i>
+                        </div>
+                        <div class="progress-text">
+                            <span class="progress-label">CURRENT PROGRESS</span>
+                            <span class="progress-value" id="progress-val">12 <span style="font-size:1rem; font-weight:600; color:var(--text-muted);">Nations</span></span>
+                        </div>
+                    </div>
+                    <a href="#" class="explore-link">Explore Now <i class="ph ph-arrow-right"></i></a>
+                </div>
+
+            </div>
+
+            <!-- Journey History 引き出しレイヤ -->
+            <div id="journey-drawer" class="journey-drawer">
+                <div class="drawer-header">
+                    <button class="icon-btn close-drawer-btn" id="close-drawer-btn">
+                        <i class="ph ph-x"></i>
+                    </button>
+                    <div class="drawer-titles">
+                        <span class="section-subtitle">MY ADVENTURES</span>
+                        <h2 class="section-title">Journey History</h2>
+                    </div>
+                </div>
+                <div class="drawer-content scrollable-drawer">
+                    <div class="timeline-container" id="timeline-container">
+                        <!-- JSで動的に追加されるタイムライン -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ボトムナビゲーション -->
+            <nav class="bottom-nav">
+                <a href="./index.html" class="nav-item active">
+                    <div class="nav-icon-wrapper">
+                        <i class="ph-fill ph-map-trifold"></i>
+                    </div>
+                    <span>MAP</span>
+                </a>
+                <a href="./register.html" class="nav-item">
+                    <div class="nav-icon-wrapper">
+                        <i class="ph-bold ph-plus"></i>
+                    </div>
+                    <span>ADD LOG</span>
+                </a>
+            </nav>
         </div>
-
-        <!-- 地図表示 -->
-        <div id="map"></div>
-
-        <!-- 記録ページへのリンク (FAB) -->
-        <a href="./register.html" class="fab">+</a>
 
         <script type="module" src="./src/index.js"></script>
     </body>
