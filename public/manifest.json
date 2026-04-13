@@ -1,0 +1,16 @@
+{
+  "name": "Travel Log",
+  "short_name": "Travel Log",
+  "description": "A dynamic travel log mapping application",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#191a1a",
+  "theme_color": "#191a1a",
+  "icons": [
+    {
+      "src": "./icon-512x512.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}

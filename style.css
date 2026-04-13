@@ -76,6 +76,7 @@ body {
 .app-container {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -209,7 +210,7 @@ body {
 
 .map-overlay-toggle {
   position: absolute;
-  bottom: 1.5rem;
+  top: 1.5rem;
   left: 1.5rem;
   z-index: 500;
 }

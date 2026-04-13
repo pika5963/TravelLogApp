@@ -403,11 +403,8 @@ function renderCurrentMode() {
             map.setView([35.817, 104.1954], 4);
             const logs = JSON.parse(localStorage.getItem("travelLogs") || "[]");
             const visitedProvinces = new Set();
-            const pinQueue = [];
-
             logs.forEach(log => {
                 if (log.country !== "中国" && !(log.location && log.location.includes("中国")) && !log.province_zh) return;
-                if (log.lat && log.lon) pinQueue.push(log);
                 if (log.province_zh) {
                     const provinceEn = getProvinceEn(log.province_zh);
                     if (provinceEn) visitedProvinces.add(provinceEn);
@@ -435,20 +432,11 @@ function renderCurrentMode() {
                             });
                         }
                     }).addTo(map);
+                    
+                    // Draw small green dots for each visited location
+                    drawVisitedDots(logs, 'china');
                 })
                 .catch(err => console.error('GeoJSON Load failed:', err));
-
-            // Drop Pins with stagger
-            pinQueue.forEach((log, idx) => {
-                const colorClass = idx % 2 === 0 ? '' : 'pin-purple'; // 交互に色を変えるなどのデモ
-                const marker = L.marker([log.lat, log.lon], { icon: createCustomIcon(colorClass) })
-                 .addTo(map);
-                 
-                marker.on('click', () => {
-                    const matchingLogs = logs.filter(l => l.province_zh && getProvinceEn(l.province_zh) === getProvinceEn(log.province_zh));
-                    openJourneyDrawer('china', matchingLogs);
-                });
-            });
             break;
     }
 }
@@ -474,7 +462,7 @@ function renderWorldMode(visitedCountryNames) {
                     openJourneyDrawer('world', matchingLogs);
                 });
             }
-        }).addTo(map)
+        }).addTo(map);
     })
     .catch(err => console.error('GeoJSON Load failed:', err));
 }
@@ -500,4 +488,35 @@ function getVisitedCountryNamesFromStorage() {
         }
     });
     return Array.from(countries);
+}
+
+function drawVisitedDots(logs, mode) {
+    logs.forEach(log => {
+        if (log.lat && log.lon) {
+            // mode filtering
+            if (mode === 'china') {
+                if (log.country !== "中国" && !(log.location && log.location.includes("中国")) && !log.province_zh) return;
+            }
+            
+            const dot = L.circleMarker([log.lat, log.lon], {
+                radius: 4,
+                fillColor: '#10b981', // green
+                color: '#ffffff',
+                weight: 1.5,
+                fillOpacity: 0.9
+            }).addTo(map);
+
+            dot.on('click', (e) => {
+                 if (e.originalEvent) L.DomEvent.stopPropagation(e.originalEvent);
+                 if (mode === 'china') {
+                     const provinceEn = getProvinceEn(log.province_zh);
+                     const matchingLogs = logs.filter(l => l.province_zh && getProvinceEn(l.province_zh) === provinceEn);
+                     openJourneyDrawer('china', matchingLogs.length > 0 ? matchingLogs : [log]);
+                 } else {
+                     const matchingLogs = logs.filter(l => l.country === log.country);
+                     openJourneyDrawer('world', matchingLogs.length > 0 ? matchingLogs : [log]);
+                 }
+            });
+        }
+    });
 }
