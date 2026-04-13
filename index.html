@@ -39,9 +39,14 @@
                 <div id="map" class="map-split-view"></div>
                 
                 <!-- 表示モード切替ボタン (カプセル型) -->
-                <div class="mode-selector map-overlay-toggle">
-                    <button data-mode="world" class="active">WORLD</button>
-                    <button data-mode="china">CHINA</button>
+                <div class="mode-selector map-overlay-toggle compact-toggle">
+                    <button data-mode="world" aria-label="WORLD" title="World Mode"><i class="ph-fill ph-globe-hemisphere-west"></i></button>
+                    <button data-mode="china" class="active" aria-label="CHINA" title="China Mode">
+                        <svg class="flag-icon-btn" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="12" fill="#DE2910"/>
+                            <path d="M12 3.5l2.6 7.4h7.4l-6 4.5 2.3 7-6.3-4.5-6.3 4.5 2.3-7-6-4.5h7.4z" fill="#FFDE00" transform="matrix(0.65, 0, 0, 0.65, 4.2, 4.2)"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
 

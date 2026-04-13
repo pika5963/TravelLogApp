@@ -64,60 +64,26 @@ function updateProgressCard(label, value, iconClass) {
     if (iconEl && iconClass) iconEl.className = iconClass;
 }
 
-// クリックした地域の詳細記録をパネルに表示する関数
-function createInfoPanel(event, logs) {
-    let popup = document.getElementById('info-popup');
-    if (popup) popup.remove();
-    if (logs.length === 0) return;
+// Window UI Drawer helper function
+function openJourneyDrawer(mode, filterLogs = null) {
+    const drawer = document.getElementById('journey-drawer');
+    const timelineContainer = document.getElementById('timeline-container');
+    const titlesContainer = drawer.querySelector('.drawer-titles');
 
-    popup = document.createElement('div');
-    popup.id = 'info-popup';
-    popup.style.position = 'absolute';
-    popup.style.backgroundColor = currentTheme === 'dark' ? 'rgba(26,27,38,0.95)' : 'rgba(255,255,255,0.95)';
-    popup.style.border = currentTheme === 'dark' ? '1px solid #333' : '1px solid #ddd';
-    popup.style.color = currentTheme === 'dark' ? 'white' : '#1a1b26';
-    popup.style.borderRadius = '12px';
-    popup.style.padding = '12px 16px';
-    popup.style.boxShadow = '0 8px 16px rgba(0,0,0,0.2)';
-    popup.style.maxWidth = '90%';
-    popup.style.maxHeight = '300px';
-    popup.style.overflowY = 'auto';
-    popup.style.display = 'flex';
-    popup.style.flexDirection = 'column';
-    popup.style.gap = '10px';
-    popup.style.zIndex = 1000;
-    document.body.appendChild(popup);
-
-    const {x, y} = event;
-    popup.style.left = `${x}px`;
-    popup.style.top = `${y}px`;
-
-    logs.forEach(log => {
-        const row = document.createElement('div');
-        row.style.padding = '6px 0';
-        row.style.borderBottom = currentTheme === 'dark' ? '1px solid #444' : '1px solid #eee';
-        row.style.fontSize = '0.95rem';
-        row.style.whiteSpace = 'nowrap';
-        row.style.overflow = 'hidden';
-        row.style.textOverflow = 'ellipsis';
-
-        const cleanName = log.location ? log.location.split(',')[0].trim() : "不明な場所";
-        row.innerHTML = `<a href="shortcuts://run-shortcut?name=FindTripPhotos&input=${log.date}" style="color: #4a90e2; font-weight: bold; margin-right: 12px; text-decoration: none;">${log.date}</a><strong>${cleanName}</strong>`;
-        popup.appendChild(row);
-    });
-
-    if (popup.lastChild) {
-        popup.lastChild.style.borderBottom = 'none';
+    if (mode === 'world') {
+        if (!filterLogs) {
+            renderTimelineLogs(timelineContainer, 'world');
+        } else {
+            timelineContainer.classList.remove('grouped-mode');
+            renderFlatTimeline(timelineContainer, filterLogs);
+        }
+        if (titlesContainer) titlesContainer.innerHTML = '<span class="section-subtitle">Timeline Experience</span><h2 class="section-title">Visited Countries</h2>';
+    } else {
+        renderTimelineLogs(timelineContainer, 'china', filterLogs);
+        if (titlesContainer) titlesContainer.innerHTML = '<span class="section-subtitle">MY ADVENTURES</span><h2 class="section-title">Journey History</h2>';
     }
-
-    setTimeout(() => {
-        document.addEventListener('click', function handler(evt) {
-            if (!popup.contains(evt.target)) {
-                popup.remove();
-                document.removeEventListener('click', handler);
-            }
-        });
-    }, 10);
+    
+    drawer.classList.add('open');
 }
 
 // 省の判定に使用する対応リスト
@@ -193,18 +159,7 @@ function setupDrawer() {
     if (exploreBtn && drawer && closeBtn) {
         exploreBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            renderTimelineLogs(timelineContainer, currentMode);
-            drawer.classList.add('open');
-            
-            // Dynamic Header Updates
-            const titlesContainer = drawer.querySelector('.drawer-titles');
-            if (titlesContainer) {
-                if (currentMode === 'world') {
-                    titlesContainer.innerHTML = '<span class="section-subtitle">Timeline Experience</span><h2 class="section-title">Visited Countries</h2>';
-                } else {
-                    titlesContainer.innerHTML = '<span class="section-subtitle">MY ADVENTURES</span><h2 class="section-title">Journey History</h2>';
-                }
-            }
+            openJourneyDrawer(currentMode);
         });
 
         closeBtn.addEventListener('click', () => {
@@ -239,36 +194,45 @@ function renderFlatTimeline(container, logs) {
         return;
     }
 
+    let timelineHtml = '<div class="nested-timeline">';
     logs.forEach(log => {
-        // Find flag
-        const enCountry = countryMapping[log.country] || log.country;
-        const isoCode = flagMapping[enCountry];
-        let bgStyle = "background-image: linear-gradient(135deg, #4a90e2, #8b5cf6);";
-        if (isoCode) {
-            bgStyle = `background-image: url('https://flagcdn.com/w80/${isoCode}.png');`;
-        }
-        
         const shortLocation = log.location ? log.location.split(',')[0].trim() : "Unknown";
+        let dateStr = log.date;
+        if (dateStr) {
+            let d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+                dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+            }
+        }
 
-        const item = document.createElement('div');
-        item.className = 'timeline-item';
-        item.innerHTML = `
-            <div class="timeline-node" style="${bgStyle}"></div>
-            <div class="timeline-card">
-                <div class="timeline-date">${formatToDisplayDate(log.date)}</div>
-                <h3 class="timeline-address">${shortLocation}${enCountry ? `, ${enCountry}` : ''}</h3>
-                <p class="timeline-memo">${log.memo || "Enjoying the journey."}</p>
-                <a href="shortcuts://run-shortcut?name=FindTripPhotos&input=${log.date}" class="photos-btn">
-                    <i class="ph-bold ph-image"></i> Photos
-                </a>
+        timelineHtml += `
+            <div class="nt-node">
+                <div class="nt-dot"></div>
+                <div class="nt-body">
+                    <div class="nt-header">
+                        <h4 class="nt-title">${log.title || shortLocation}</h4>
+                        <span class="nt-date">${dateStr}</span>
+                    </div>
+                    <div class="nt-location">
+                        <i class="ph-fill ph-map-pin"></i> ${shortLocation}
+                    </div>
+                    <div class="nt-memo" style="font-size:0.9rem; color:var(--text-secondary); margin-top:0.25rem; display:flex; gap:0.4rem; align-items:flex-start;">
+                        <i class="ph ph-pencil-simple" style="margin-top:0.15rem;"></i>
+                        <span style="flex:1; line-height:1.4;">${log.memo || "Enjoying the journey."}</span>
+                    </div>
+                    <a href="shortcuts://run-shortcut?name=FindTripPhotos&input=${log.date}" class="nt-album-btn" aria-label="View Album">
+                        <i class="ph-bold ph-image"></i>
+                    </a>
+                </div>
             </div>
         `;
-        container.appendChild(item);
     });
+    timelineHtml += '</div>';
+    container.innerHTML = timelineHtml;
 }
 
-function renderTimelineLogs(container, mode) {
-    let logs = JSON.parse(localStorage.getItem("travelLogs") || "[]");
+function renderTimelineLogs(container, mode, specificLogs = null) {
+    let logs = specificLogs || JSON.parse(localStorage.getItem("travelLogs") || "[]");
     container.innerHTML = '';
     
     // CHINA MODE: Flat list, filtered to China only
@@ -359,8 +323,12 @@ function renderTimelineLogs(container, mode) {
                     <div class="nt-location">
                         <i class="ph-fill ph-map-pin"></i> ${shortLocation}
                     </div>
-                    <a href="shortcuts://run-shortcut?name=FindTripPhotos&input=${log.date}" class="nt-album-btn">
-                        <i class="ph-bold ph-image"></i> VIEW ALBUM
+                    <div class="nt-memo" style="font-size:0.9rem; color:var(--text-secondary); margin-top:0.25rem; display:flex; gap:0.4rem; align-items:flex-start;">
+                        <i class="ph ph-pencil-simple" style="margin-top:0.15rem;"></i>
+                        <span style="flex:1; line-height:1.4;">${log.memo || "Enjoying the journey."}</span>
+                    </div>
+                    <a href="shortcuts://run-shortcut?name=FindTripPhotos&input=${log.date}" class="nt-album-btn" aria-label="View Album">
+                        <i class="ph-bold ph-image"></i>
                     </a>
                 </div>
              </div>
@@ -380,10 +348,7 @@ function renderTimelineLogs(container, mode) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    map = L.map('map', { zoomControl: false }).setView([35.8617, 104.1954], 4);
-    
-    // 右下にズームコントロールを配置
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([35.8617, 104.1954], 4);
 
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     if (themeToggleBtn) {
@@ -410,6 +375,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 初回描画
     renderCurrentMode();
+
+    // iOS standalone mode link default behavior fix
+    if (("standalone" in window.navigator) && window.navigator.standalone) {
+        document.addEventListener('click', function(e) {
+            let target = e.target.closest('a');
+            if (target && target.href && !target.href.startsWith('shortcuts://')) {
+                e.preventDefault();
+                window.location.href = target.href;
+            }
+        });
+    }
 });
 
 function renderCurrentMode() {
@@ -452,10 +428,10 @@ function renderCurrentMode() {
                                 : { fillColor: 'transparent', color: currentTheme === 'dark' ? '#555' : '#ccc', weight: 0.5, fillOpacity: 0 };
                         },
                         onEachFeature: (feature, layer) => {
-                            layer.on('click', (e) => {
+                            layer.on('click', () => {
                                 const provinceEn = feature.properties.name;
                                 const matchingLogs = logs.filter(log => log.province_zh && getProvinceEn(log.province_zh) === provinceEn);
-                                createInfoPanel(e.originalEvent, matchingLogs);
+                                openJourneyDrawer('china', matchingLogs);
                             });
                         }
                     }).addTo(map);
@@ -465,9 +441,13 @@ function renderCurrentMode() {
             // Drop Pins with stagger
             pinQueue.forEach((log, idx) => {
                 const colorClass = idx % 2 === 0 ? '' : 'pin-purple'; // 交互に色を変えるなどのデモ
-                L.marker([log.lat, log.lon], { icon: createCustomIcon(colorClass) })
-                 .addTo(map)
-                 .bindPopup(`<strong>${log.title || log.location}</strong><br>${log.province_zh || ""}`);
+                const marker = L.marker([log.lat, log.lon], { icon: createCustomIcon(colorClass) })
+                 .addTo(map);
+                 
+                marker.on('click', () => {
+                    const matchingLogs = logs.filter(l => l.province_zh && getProvinceEn(l.province_zh) === getProvinceEn(log.province_zh));
+                    openJourneyDrawer('china', matchingLogs);
+                });
             });
             break;
     }
@@ -487,11 +467,11 @@ function renderWorldMode(visitedCountryNames) {
                 }
             },
             onEachFeature: (feature, layer) => {
-                layer.on('click', (e) => {
+                layer.on('click', () => {
                     const countryName = feature.properties.name;
                     const logs = JSON.parse(localStorage.getItem("travelLogs") || "[]");
                     const matchingLogs = logs.filter(log => log.country === countryName);
-                    createInfoPanel(e.originalEvent, matchingLogs);
+                    openJourneyDrawer('world', matchingLogs);
                 });
             }
         }).addTo(map)

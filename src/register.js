@@ -316,5 +316,15 @@ document.addEventListener("DOMContentLoaded", () => {
       list.appendChild(div);
     });
   }
+  // iOS standalone mode link default behavior fix
+  if (("standalone" in window.navigator) && window.navigator.standalone) {
+      document.addEventListener('click', function(e) {
+          let target = e.target.closest('a');
+          if (target && target.href && !target.href.startsWith('shortcuts://')) {
+              e.preventDefault();
+              window.location.href = target.href;
+          }
+      });
+  }
 
 });
